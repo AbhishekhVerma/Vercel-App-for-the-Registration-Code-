@@ -5,6 +5,10 @@
       "destination": "/api/main.py"
     },
     {
+      "source": "/favicon.jpg",
+      "destination": "/favicon.jpg"
+    },
+    {
       "source": "/((?!api/.*).*)",
       "destination": "/index.html"
     }
