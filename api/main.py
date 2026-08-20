@@ -27,8 +27,8 @@ def clean_exam(exam_str):
     if s in ['TBA', '-', '']: return None
     return s
 
-def load_master_catalog():
-    xl = pd.ExcelFile(DATA_FILE)
+def load_master_catalog(file_or_path):
+    xl = pd.ExcelFile(file_or_path)
     df_ct = pd.read_excel(xl, 'Course Timetable', header=None)
     headers = ['CRSE_ID', 'COURSE NO.', 'S No', 'COURSE TITLE', 'L P U or CH', 'L or P', 'SEC', 'INSTRUCTOR', 'ROOM', 'DAYS/ HOURS', 'MIDSEM', 'COMPRE']
     df_ct.columns = headers
@@ -69,9 +69,15 @@ def analyze():
         grid_data = json.loads(request.form.get('grid_data', '[]'))
         hum_mode = request.form.get('hum_mode', 'default')
         disc_mode = request.form.get('disc_mode', 'default')
+        master_mode = request.form.get('master_mode', 'default')
         excluded_hum = json.loads(request.form.get('excluded_hum', '[]'))
         
-        df_ct = load_master_catalog()
+        # Determine Master Catalog File
+        master_data_source = DATA_FILE
+        if master_mode == 'upload' and 'master_file' in request.files:
+            master_data_source = request.files['master_file']
+            
+        df_ct = load_master_catalog(master_data_source)
         
         # 1. Parse Core Timetable from Grid Data
         core_occupied_slots = set()
@@ -168,7 +174,7 @@ def analyze():
         # Determine Disciplinary List
         disc_list = []
         if disc_mode == 'default':
-            xl = pd.ExcelFile(DATA_FILE)
+            xl = pd.ExcelFile(master_data_source)
             df_disc = pd.read_excel(xl, 'Disciplinary Courses')
             disc_list = df_disc['Course'].dropna().str.strip().tolist()
         elif disc_mode == 'upload' and 'disc_file' in request.files:
@@ -185,7 +191,7 @@ def analyze():
         # Determine Humanities List
         hum_list = []
         if hum_mode == 'default':
-            xl = pd.ExcelFile(DATA_FILE)
+            xl = pd.ExcelFile(master_data_source)
             df_hum = pd.read_excel(xl, 'Humanities Option')
             hum_list = df_hum['Course'].dropna().str.strip().tolist()
             # Filter out excluded humanities

@@ -19,6 +19,16 @@
             <h1 class="text-3xl font-bold text-indigo-600 mb-2">Course Timetable Scheduler</h1>
             <p class="text-gray-500 mb-6">Manually input your core courses directly on the grid, configure your electives, and hit analyze!</p>
             
+            <div class="mb-6 bg-indigo-50 p-4 rounded-lg border border-indigo-100">
+                <h2 class="text-lg font-bold text-indigo-800 mb-2">Master Course Database</h2>
+                <select v-model="masterMode" class="block w-full p-2 border border-indigo-200 rounded-md text-sm mb-2 focus:ring-indigo-500 focus:border-indigo-500 bg-white">
+                    <option value="default">2026-27 Semester 1 Timetable (Default)</option>
+                    <option value="upload">Upload Custom Timetable (.xlsx)</option>
+                </select>
+                <input v-if="masterMode === 'upload'" type="file" @change="e => masterFile = e.target.files[0]" accept=".xlsx" class="block w-full text-xs text-indigo-700 file:mr-4 file:py-1 file:px-3 file:rounded file:border-0 file:bg-indigo-100 file:text-indigo-800 mt-2" />
+                <p v-if="masterMode === 'upload'" class="text-xs text-indigo-600 mt-2">Note: Checklists below will be unavailable. Please select 'Upload Custom Excel List' for electives if your master file doesn't have those sheets.</p>
+            </div>
+
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
                 <!-- Manual Timetable Entry -->
                 <div>
@@ -189,6 +199,8 @@
 
                 return {
                     manualGrid,
+                    masterMode: 'default',
+                    masterFile: null,
                     discMode: 'default',
                     humMode: 'default',
                     discFile: null,
@@ -264,6 +276,7 @@
 
                     const formData = new FormData();
                     formData.append('grid_data', JSON.stringify(this.getGridPayload()));
+                    formData.append('master_mode', this.masterMode);
                     formData.append('disc_mode', this.discMode);
                     formData.append('hum_mode', this.humMode);
                     
@@ -271,6 +284,7 @@
                     const excluded = this.catalogHumanities.map(h=>h.id).filter(id => !this.includedHumanities.includes(id));
                     formData.append('excluded_hum', JSON.stringify(excluded));
 
+                    if (this.masterMode === 'upload' && this.masterFile) formData.append('master_file', this.masterFile);
                     if (this.discMode === 'upload' && this.discFile) formData.append('disc_file', this.discFile);
                     if (this.humMode === 'upload' && this.humFile) formData.append('hum_file', this.humFile);
 
