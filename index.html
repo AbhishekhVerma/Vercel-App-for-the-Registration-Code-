@@ -7,28 +7,87 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Dancing+Script&display=swap" rel="stylesheet">
+    <style>
+        .grid-input { width: 100%; box-sizing: border-box; border: none; background: transparent; outline: none; text-align: center; }
+        .grid-cell { padding: 4px; border: 1px solid #e5e7eb; transition: background 0.2s; }
+        .grid-cell:hover, .grid-cell:focus-within { background-color: #f3f4f6; }
+    </style>
 </head>
 <body class="bg-gray-50 text-gray-800 font-sans p-6">
     <div id="app" class="max-w-7xl mx-auto space-y-6">
         <header class="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
             <h1 class="text-3xl font-bold text-indigo-600 mb-2">Course Timetable Scheduler</h1>
-            <p class="text-gray-500 mb-4">Upload your `Main.xlsx` file to automatically check for clashes and visualize your final schedule.</p>
+            <p class="text-gray-500 mb-6">Manually input your core courses directly on the grid, configure your electives, and hit analyze!</p>
             
-            <div class="flex items-center space-x-4">
-                <input type="file" @change="handleFileUpload" accept=".xlsx" class="block w-full text-sm text-gray-500
-                    file:mr-4 file:py-2 file:px-4
-                    file:rounded-full file:border-0
-                    file:text-sm file:font-semibold
-                    file:bg-indigo-50 file:text-indigo-700
-                    hover:file:bg-indigo-100 transition-colors" />
-                <button @click="uploadFile" :disabled="!selectedFile || isLoading"
-                        class="bg-indigo-600 text-white px-6 py-2 rounded-full font-medium hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
-                    <span v-if="isLoading">Analyzing...</span>
-                    <span v-else>Analyze Courses</span>
-                </button>
-            </div>
-            <div v-if="errorMsg" class="mt-4 p-3 bg-red-100 text-red-700 rounded-md border border-red-200">
-                {{ errorMsg }}
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <!-- Manual Timetable Entry -->
+                <div>
+                    <h2 class="text-xl font-bold text-gray-700 mb-2">1. Core Timetable</h2>
+                    <p class="text-sm text-gray-500 mb-2">Type your Core Course IDs (e.g. <code>CS F372</code>) into the grid below. Fill 2 blocks if it spans 2 periods.</p>
+                    <div class="overflow-x-auto border border-gray-200 rounded-md">
+                        <table class="w-full text-sm text-center">
+                            <thead class="bg-gray-100 text-gray-600 text-xs uppercase">
+                                <tr>
+                                    <th class="p-2 border">Hr</th>
+                                    <th class="p-2 border">Mon</th>
+                                    <th class="p-2 border">Tue</th>
+                                    <th class="p-2 border">Wed</th>
+                                    <th class="p-2 border">Thu</th>
+                                    <th class="p-2 border">Fri</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr v-for="h in 9" :key="h">
+                                    <td class="p-2 border font-bold bg-gray-50 text-xs">{{ h }}</td>
+                                    <td class="grid-cell"><input v-model="manualGrid[h-1].Monday" class="grid-input text-xs" placeholder="---" /></td>
+                                    <td class="grid-cell"><input v-model="manualGrid[h-1].Tuesday" class="grid-input text-xs" placeholder="---" /></td>
+                                    <td class="grid-cell"><input v-model="manualGrid[h-1].Wednesday" class="grid-input text-xs" placeholder="---" /></td>
+                                    <td class="grid-cell"><input v-model="manualGrid[h-1].Thursday" class="grid-input text-xs" placeholder="---" /></td>
+                                    <td class="grid-cell"><input v-model="manualGrid[h-1].Friday" class="grid-input text-xs" placeholder="---" /></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Preferences -->
+                <div class="space-y-6">
+                    <div>
+                        <h2 class="text-xl font-bold text-gray-700 mb-2">2. Disciplinary Electives</h2>
+                        <select v-model="discMode" class="block w-full p-2 border border-gray-300 rounded-md text-sm mb-2 focus:ring-indigo-500 focus:border-indigo-500">
+                            <option value="default">Default (Computer Science)</option>
+                            <option value="upload">Upload Custom Excel List</option>
+                        </select>
+                        <input v-if="discMode === 'upload'" type="file" @change="e => discFile = e.target.files[0]" accept=".xlsx" class="block w-full text-xs text-gray-500 file:mr-4 file:py-1 file:px-3 file:rounded file:border-0 file:bg-indigo-50 file:text-indigo-700" />
+                    </div>
+
+                    <div>
+                        <h2 class="text-xl font-bold text-gray-700 mb-2">3. Humanities Electives</h2>
+                        <select v-model="humMode" class="block w-full p-2 border border-gray-300 rounded-md text-sm mb-2 focus:ring-indigo-500 focus:border-indigo-500">
+                            <option value="default">Default (All Engineering Degrees)</option>
+                            <option value="upload">Upload Custom Excel List</option>
+                        </select>
+                        <input v-if="humMode === 'upload'" type="file" @change="e => humFile = e.target.files[0]" accept=".xlsx" class="block w-full text-xs text-gray-500 file:mr-4 file:py-1 file:px-3 file:rounded file:border-0 file:bg-indigo-50 file:text-indigo-700" />
+                        
+                        <div v-if="humMode === 'default' && catalogHumanities.length" class="mt-2 border rounded-md p-3 h-48 overflow-y-auto bg-gray-50 text-sm">
+                            <p class="font-semibold mb-2 text-gray-600 text-xs">Uncheck to exclude from search:</p>
+                            <div v-for="h in catalogHumanities" :key="h.id" class="flex items-center space-x-2 mb-1">
+                                <input type="checkbox" :id="'hum_'+h.id" :value="h.id" v-model="includedHumanities" class="rounded text-indigo-600 focus:ring-indigo-500">
+                                <label :for="'hum_'+h.id" class="text-gray-700 text-xs"><span class="font-bold">{{ h.id }}</span> - {{ h.title }}</label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="pt-4 border-t">
+                        <button @click="analyze" :disabled="isLoading" class="w-full bg-indigo-600 text-white px-6 py-3 rounded-md font-bold hover:bg-indigo-700 disabled:opacity-50 transition-colors shadow-sm">
+                            <span v-if="isLoading">Analyzing...</span>
+                            <span v-else>Analyze & Find Courses</span>
+                        </button>
+                        <div v-if="errorMsg" class="mt-3 p-3 bg-red-100 text-red-700 rounded-md border border-red-200 text-sm">
+                            {{ errorMsg }}
+                        </div>
+                    </div>
+                </div>
             </div>
         </header>
 
@@ -53,6 +112,7 @@
                             </div>
                             <p v-if="!course.is_ok" class="text-xs text-red-600 mt-2 font-medium">Clash: {{ course.status }}</p>
                         </div>
+                        <p v-if="!disciplinary.length" class="text-gray-500 text-sm">No disciplinary courses found.</p>
                     </div>
                 </div>
 
@@ -73,6 +133,7 @@
                             </div>
                             <p v-if="!course.is_ok" class="text-xs text-red-600 mt-2 font-medium">Clash: {{ course.status }}</p>
                         </div>
+                        <p v-if="!humanities.length" class="text-gray-500 text-sm">No humanities courses found.</p>
                     </div>
                 </div>
 
@@ -120,24 +181,41 @@
 
         createApp({
             data() {
+                // Initialize 9x5 grid
+                const manualGrid = [];
+                for(let i=1; i<=9; i++) {
+                    manualGrid.push({ hour: i, Monday: '', Tuesday: '', Wednesday: '', Thursday: '', Friday: '' });
+                }
+
                 return {
-                    selectedFile: null,
+                    manualGrid,
+                    discMode: 'default',
+                    humMode: 'default',
+                    discFile: null,
+                    humFile: null,
+                    
+                    catalogHumanities: [],
+                    includedHumanities: [], // V-model array for checkboxes
+
                     isLoading: false,
                     dataLoaded: false,
                     errorMsg: '',
+                    
                     baseTimetable: [],
                     disciplinary: [],
                     humanities: [],
                     selectedCourses: []
                 }
             },
+            mounted() {
+                this.fetchCatalog();
+            },
             computed: {
                 combinedTimetable() {
-                    // Deep copy base timetable
                     let tt = JSON.parse(JSON.stringify(this.baseTimetable));
                     
-                    // Add selected courses
                     this.selectedCourses.forEach(course => {
+                        if(!course.dh_parsed) return;
                         course.dh_parsed.forEach(slot => {
                             let day = slot[0];
                             let hour = slot[1];
@@ -154,18 +232,47 @@
                 }
             },
             methods: {
-                handleFileUpload(event) {
-                    this.selectedFile = event.target.files[0];
-                    this.errorMsg = '';
+                async fetchCatalog() {
+                    try {
+                        const res = await fetch('/api/catalog');
+                        if (res.ok) {
+                            const data = await res.json();
+                            this.catalogHumanities = data.humanities || [];
+                            // By default include all
+                            this.includedHumanities = this.catalogHumanities.map(h => h.id);
+                        }
+                    } catch (err) {
+                        console.error('Failed to fetch catalog:', err);
+                    }
                 },
-                async uploadFile() {
-                    if (!this.selectedFile) return;
+                getGridPayload() {
+                    const payload = [];
+                    const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
+                    this.manualGrid.forEach(row => {
+                        days.forEach(day => {
+                            if (row[day].trim()) {
+                                payload.push({ day, hour: row.hour, course: row[day].trim() });
+                            }
+                        });
+                    });
+                    return payload;
+                },
+                async analyze() {
                     this.isLoading = true;
                     this.errorMsg = '';
                     this.selectedCourses = [];
 
                     const formData = new FormData();
-                    formData.append('file', this.selectedFile);
+                    formData.append('grid_data', JSON.stringify(this.getGridPayload()));
+                    formData.append('disc_mode', this.discMode);
+                    formData.append('hum_mode', this.humMode);
+                    
+                    // Excluded = catalog minus included
+                    const excluded = this.catalogHumanities.map(h=>h.id).filter(id => !this.includedHumanities.includes(id));
+                    formData.append('excluded_hum', JSON.stringify(excluded));
+
+                    if (this.discMode === 'upload' && this.discFile) formData.append('disc_file', this.discFile);
+                    if (this.humMode === 'upload' && this.humFile) formData.append('hum_file', this.humFile);
 
                     try {
                         const res = await fetch('/api/analyze', {
@@ -175,7 +282,7 @@
                         const data = await res.json();
                         
                         if (!res.ok) {
-                            throw new Error(data.error || 'Failed to process file');
+                            throw new Error(data.error || 'Failed to process analysis');
                         }
 
                         this.baseTimetable = data.base_timetable;
@@ -190,7 +297,6 @@
                 },
                 renderCell(content) {
                     if (!content) return '';
-                    // Style base courses normally, selected courses are styled via HTML injected in computed prop
                     return content;
                 }
             }
