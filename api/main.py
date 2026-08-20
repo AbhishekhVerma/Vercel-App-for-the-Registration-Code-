@@ -178,10 +178,22 @@ def analyze():
 
         # Determine Disciplinary List
         disc_list = []
-        if disc_mode == 'default':
+        if disc_mode in ['default', 'cs']:
             xl = pd.ExcelFile(master_data_source)
-            df_disc = pd.read_excel(xl, 'Disciplinary Courses')
-            disc_list = df_disc['Course'].dropna().str.strip().tolist()
+            try:
+                df_disc = pd.read_excel(xl, 'Disciplinary Courses')
+                disc_list = df_disc['Course'].dropna().str.strip().tolist()
+            except Exception: pass
+        elif disc_mode == 'biotech':
+            disc_list = [
+                'BIOT F242',
+                'BIOT F345',
+                'BIOT F347',
+                'BIOT F413',
+                'BIOT F416',
+                'BIOT F420',
+                'BIOT F492'
+            ]
         elif disc_mode == 'upload' and 'disc_file' in request.files:
             try:
                 df_disc = pd.read_excel(request.files['disc_file'])
