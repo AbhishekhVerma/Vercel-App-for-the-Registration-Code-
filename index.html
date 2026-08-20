@@ -35,17 +35,17 @@
         }
     </script>
     <style>
-        body { background-color: #0a0a0a; color: #ffffff; }
-        .grid-input { width: 100%; box-sizing: border-box; border: none; background: transparent; outline: none; text-align: center; color: white; }
-        .grid-input::placeholder { color: #525252; }
-        .grid-cell { padding: 4px; border: 1px solid #262626; transition: background 0.2s; }
-        .grid-cell:hover, .grid-cell:focus-within { background-color: #1a1a1a; }
+        body { background-color: #050505; color: #ffffff; }
+        .grid-input { width: 100%; box-sizing: border-box; border: none; background: transparent; outline: none; text-align: center; color: white; font-weight: 500; }
+        .grid-input::placeholder { color: #737373; }
+        .grid-cell { padding: 4px; border: 1px solid #333333; transition: background 0.2s; }
+        .grid-cell:hover, .grid-cell:focus-within { background-color: #262626; }
         
         /* Custom scrollbar for dark theme */
         ::-webkit-scrollbar { width: 8px; }
         ::-webkit-scrollbar-track { background: #0a0a0a; }
-        ::-webkit-scrollbar-thumb { background: #262626; border-radius: 4px; }
-        ::-webkit-scrollbar-thumb:hover { background: #404040; }
+        ::-webkit-scrollbar-thumb { background: #333333; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #4d4d4d; }
         
         /* Custom checkbox */
         input[type="checkbox"] {
@@ -56,62 +56,62 @@
 <body class="font-sans antialiased selection:bg-brand-500 selection:text-white">
     <div id="app" class="max-w-7xl mx-auto px-6 py-12 space-y-12">
         <!-- Hero Section -->
-        <header class="relative rounded-[2rem] overflow-hidden bg-dark-panel border border-dark-border px-8 py-16 md:px-16 md:py-24">
+        <header class="relative rounded-[2rem] overflow-hidden bg-[#111] border border-[#2a2a2a] px-8 py-16 md:px-16 md:py-24 shadow-2xl">
             <!-- Subtle gradient glow -->
             <div class="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-[#ff5e00]/20 to-transparent opacity-50 pointer-events-none"></div>
             
             <div class="relative z-10 max-w-3xl">
-                <p class="text-brand-500 font-semibold tracking-wider uppercase text-sm mb-4">Course Scheduler</p>
+                <p class="text-brand-500 font-bold tracking-wider uppercase text-sm mb-4">Course Scheduler</p>
                 <h1 class="text-5xl md:text-7xl font-extrabold tracking-tight mb-6 leading-[1.1]">
                     Build your perfect<br/>
                     <span class="text-transparent bg-clip-text bg-gradient-to-r from-[#ff5e00] to-[#ffaa00]">Timetable</span>
                 </h1>
-                <p class="text-neutral-400 text-lg md:text-xl mb-10 max-w-xl font-light">
+                <p class="text-neutral-300 text-lg md:text-xl mb-10 max-w-xl font-light">
                     Manually input your core courses, configure your electives, and let our engine instantly analyze and highlight clashes for you.
                 </p>
                 
-                <div class="flex flex-col sm:flex-row items-center gap-4 bg-[#1a1a1a] p-2 rounded-full border border-dark-border w-fit">
-                    <div class="pl-4 pr-2 py-2 flex items-center gap-3">
-                        <span class="text-neutral-400 text-sm font-medium">Master Database</span>
-                        <select v-model="masterMode" class="bg-transparent text-white border-none focus:ring-0 text-sm font-semibold outline-none cursor-pointer">
-                            <option value="default" class="bg-dark-panel text-white">2026-27 Sem 1 (Default)</option>
-                            <option value="upload" class="bg-dark-panel text-white">Upload Custom (.xlsx)</option>
+                <div class="flex flex-col sm:flex-row items-center gap-4 bg-[#1f1f1f] p-2 rounded-full border border-[#333] w-fit shadow-inner">
+                    <div class="pl-5 pr-2 py-2 flex items-center gap-3">
+                        <span class="text-neutral-300 text-sm font-semibold uppercase tracking-wide">Master Database</span>
+                        <select v-model="masterMode" class="bg-[#2a2a2a] text-white border border-[#444] rounded-full px-3 py-1 focus:ring-1 focus:ring-brand-500 text-sm font-bold outline-none cursor-pointer">
+                            <option value="default">2026-27 Sem 1 (Default)</option>
+                            <option value="upload">Upload Custom (.xlsx)</option>
                         </select>
                     </div>
-                    <input v-if="masterMode === 'upload'" type="file" @change="e => masterFile = e.target.files[0]" accept=".xlsx" class="text-xs text-neutral-400 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:bg-[#262626] file:text-white hover:file:bg-[#333] transition-colors cursor-pointer" />
+                    <input v-if="masterMode === 'upload'" type="file" @change="e => masterFile = e.target.files[0]" accept=".xlsx" class="text-xs text-neutral-300 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:bg-[#333] file:text-white hover:file:bg-[#444] transition-colors cursor-pointer" />
                 </div>
-                <p v-if="masterMode === 'upload'" class="text-xs text-brand-500 mt-4 font-medium">Note: Checklists below will be unavailable. Please select 'Upload Custom' for electives if needed.</p>
+                <p v-if="masterMode === 'upload'" class="text-xs text-brand-500 mt-4 font-bold">Note: Checklists below will be unavailable. Please select 'Upload Custom' for electives if needed.</p>
             </div>
         </header>
 
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
             <!-- Manual Timetable Entry -->
-            <div class="bg-dark-panel rounded-[2rem] p-8 border border-dark-border">
+            <div class="bg-[#111] rounded-[2rem] p-8 border border-[#2a2a2a] shadow-xl">
                 <div class="mb-6">
                     <h2 class="text-2xl font-bold text-white mb-2">01. Core Timetable</h2>
-                    <p class="text-neutral-400 text-sm">Type your Core Course IDs (e.g. <code class="text-brand-500 bg-[#262626] px-1.5 py-0.5 rounded">CS F372</code>) into the grid below. Fill 2 blocks if it spans 2 periods.</p>
+                    <p class="text-neutral-400 text-sm">Type your Core Course IDs (e.g. <code class="text-white font-bold bg-[#333] px-1.5 py-0.5 rounded">CS F372</code>) into the grid below. Fill 2 blocks if it spans 2 periods.</p>
                 </div>
-                <div class="overflow-x-auto rounded-xl border border-dark-border">
+                <div class="overflow-x-auto rounded-xl border border-[#333] bg-[#1a1a1a]">
                     <table class="w-full text-sm text-center border-collapse">
-                        <thead class="bg-[#1a1a1a] text-neutral-400 text-xs uppercase tracking-widest font-semibold">
+                        <thead class="bg-[#222] text-neutral-300 text-xs uppercase tracking-widest font-bold">
                             <tr>
-                                <th class="p-4 border-b border-r border-dark-border">Hr</th>
-                                <th class="p-4 border-b border-r border-dark-border whitespace-nowrap">Time</th>
-                                <th class="p-4 border-b border-r border-dark-border">Mon</th>
-                                <th class="p-4 border-b border-r border-dark-border">Tue</th>
-                                <th class="p-4 border-b border-r border-dark-border">Wed</th>
-                                <th class="p-4 border-b border-r border-dark-border">Thu</th>
-                                <th class="p-4 border-b border-dark-border">Fri</th>
+                                <th class="p-4 border-b border-r border-[#333]">Hr</th>
+                                <th class="p-4 border-b border-r border-[#333] whitespace-nowrap">Time</th>
+                                <th class="p-4 border-b border-r border-[#333]">Mon</th>
+                                <th class="p-4 border-b border-r border-[#333]">Tue</th>
+                                <th class="p-4 border-b border-r border-[#333]">Wed</th>
+                                <th class="p-4 border-b border-r border-[#333]">Thu</th>
+                                <th class="p-4 border-b border-[#333]">Fri</th>
                             </tr>
                         </thead>
                         <tbody>
-                            <tr v-for="row in manualGrid" :key="row.hour" class="border-b border-dark-border last:border-0">
-                                <td class="p-3 border-r border-dark-border font-bold bg-[#1a1a1a] text-neutral-500 text-xs">{{ row.hour }}</td>
-                                <td class="p-3 border-r border-dark-border font-medium bg-[#141414] text-neutral-600 text-xs whitespace-nowrap">{{ row.time }}</td>
-                                <td class="grid-cell border-r border-dark-border"><input v-model="row.Monday" class="grid-input" placeholder="---" /></td>
-                                <td class="grid-cell border-r border-dark-border"><input v-model="row.Tuesday" class="grid-input" placeholder="---" /></td>
-                                <td class="grid-cell border-r border-dark-border"><input v-model="row.Wednesday" class="grid-input" placeholder="---" /></td>
-                                <td class="grid-cell border-r border-dark-border"><input v-model="row.Thursday" class="grid-input" placeholder="---" /></td>
+                            <tr v-for="row in manualGrid" :key="row.hour" class="border-b border-[#333] last:border-0">
+                                <td class="p-3 border-r border-[#333] font-black bg-[#222] text-neutral-400 text-xs">{{ row.hour }}</td>
+                                <td class="p-3 border-r border-[#333] font-bold bg-[#1a1a1a] text-neutral-400 text-xs whitespace-nowrap">{{ row.time }}</td>
+                                <td class="grid-cell border-r border-[#333]"><input v-model="row.Monday" class="grid-input" placeholder="---" /></td>
+                                <td class="grid-cell border-r border-[#333]"><input v-model="row.Tuesday" class="grid-input" placeholder="---" /></td>
+                                <td class="grid-cell border-r border-[#333]"><input v-model="row.Wednesday" class="grid-input" placeholder="---" /></td>
+                                <td class="grid-cell border-r border-[#333]"><input v-model="row.Thursday" class="grid-input" placeholder="---" /></td>
                                 <td class="grid-cell"><input v-model="row.Friday" class="grid-input" placeholder="---" /></td>
                             </tr>
                         </tbody>
@@ -121,31 +121,31 @@
 
             <!-- Preferences & Action -->
             <div class="flex flex-col gap-8">
-                <div class="bg-dark-panel rounded-[2rem] p-8 border border-dark-border flex-1">
+                <div class="bg-[#111] rounded-[2rem] p-8 border border-[#2a2a2a] shadow-xl flex-1">
                     <div class="mb-8">
                         <h2 class="text-2xl font-bold text-white mb-2">02. Disciplinary Electives</h2>
-                        <select v-model="discMode" class="block w-full p-3 bg-[#1a1a1a] text-white border border-dark-border rounded-xl text-sm focus:ring-1 focus:ring-brand-500 focus:border-brand-500 outline-none transition-all">
+                        <select v-model="discMode" class="block w-full p-3 bg-[#1f1f1f] text-white border border-[#333] rounded-xl text-sm font-semibold focus:ring-1 focus:ring-brand-500 focus:border-brand-500 outline-none transition-all cursor-pointer">
                             <option value="default">Default (Computer Science)</option>
                             <option value="upload">Upload Custom Excel List</option>
                         </select>
-                        <input v-if="discMode === 'upload'" type="file" @change="e => discFile = e.target.files[0]" accept=".xlsx" class="mt-4 block w-full text-xs text-neutral-400 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:bg-[#262626] file:text-white hover:file:bg-[#333] transition-colors cursor-pointer" />
+                        <input v-if="discMode === 'upload'" type="file" @change="e => discFile = e.target.files[0]" accept=".xlsx" class="mt-4 block w-full text-xs text-neutral-300 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:bg-[#333] file:text-white hover:file:bg-[#444] transition-colors cursor-pointer" />
                     </div>
 
                     <div>
                         <h2 class="text-2xl font-bold text-white mb-2">03. Humanities Electives</h2>
-                        <select v-model="humMode" class="block w-full p-3 bg-[#1a1a1a] text-white border border-dark-border rounded-xl text-sm focus:ring-1 focus:ring-brand-500 focus:border-brand-500 outline-none transition-all">
+                        <select v-model="humMode" class="block w-full p-3 bg-[#1f1f1f] text-white border border-[#333] rounded-xl text-sm font-semibold focus:ring-1 focus:ring-brand-500 focus:border-brand-500 outline-none transition-all cursor-pointer">
                             <option value="default">Default (All Engineering Degrees)</option>
                             <option value="upload">Upload Custom Excel List</option>
                         </select>
-                        <input v-if="humMode === 'upload'" type="file" @change="e => humFile = e.target.files[0]" accept=".xlsx" class="mt-4 block w-full text-xs text-neutral-400 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:bg-[#262626] file:text-white hover:file:bg-[#333] transition-colors cursor-pointer" />
+                        <input v-if="humMode === 'upload'" type="file" @change="e => humFile = e.target.files[0]" accept=".xlsx" class="mt-4 block w-full text-xs text-neutral-300 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:bg-[#333] file:text-white hover:file:bg-[#444] transition-colors cursor-pointer" />
                         
-                        <div v-if="humMode === 'default' && catalogHumanities.length" class="mt-4 border border-dark-border rounded-xl p-4 h-48 overflow-y-auto bg-[#1a1a1a] text-sm custom-scroll">
-                            <p class="font-semibold mb-4 text-brand-500 text-xs uppercase tracking-wider">Uncheck to exclude:</p>
+                        <div v-if="humMode === 'default' && catalogHumanities.length" class="mt-4 border border-[#333] rounded-xl p-4 h-48 overflow-y-auto bg-[#1a1a1a] shadow-inner text-sm custom-scroll">
+                            <p class="font-bold mb-4 text-brand-500 text-xs uppercase tracking-wider">Uncheck to exclude:</p>
                             <div v-for="h in catalogHumanities" :key="h.id" class="flex items-start space-x-3 mb-3 group cursor-pointer">
-                                <input type="checkbox" :id="'hum_'+h.id" :value="h.id" v-model="includedHumanities" class="mt-1 w-4 h-4 rounded border-dark-border bg-dark-panel focus:ring-brand-500 cursor-pointer">
+                                <input type="checkbox" :id="'hum_'+h.id" :value="h.id" v-model="includedHumanities" class="mt-1 w-4 h-4 rounded border-[#444] bg-[#222] focus:ring-brand-500 cursor-pointer">
                                 <label :for="'hum_'+h.id" class="text-neutral-300 text-sm cursor-pointer group-hover:text-white transition-colors leading-tight">
                                     <span class="font-bold text-white">{{ h.id }}</span><br/>
-                                    <span class="text-neutral-500 text-xs">{{ h.title }}</span>
+                                    <span class="text-neutral-500 text-xs font-medium">{{ h.title }}</span>
                                 </label>
                             </div>
                         </div>
@@ -153,38 +153,38 @@
                 </div>
                 
                 <!-- Action Button -->
-                <button @click="analyze" :disabled="isLoading" class="w-full bg-brand-500 text-white px-8 py-5 rounded-full font-bold text-lg hover:bg-brand-600 disabled:opacity-50 transition-all shadow-[0_0_20px_rgba(255,94,0,0.3)] hover:shadow-[0_0_30px_rgba(255,94,0,0.5)] flex justify-center items-center gap-2">
+                <button @click="analyze" :disabled="isLoading" class="w-full bg-brand-500 text-white px-8 py-5 rounded-full font-extrabold text-lg tracking-wide hover:bg-brand-600 disabled:opacity-50 transition-all shadow-[0_0_20px_rgba(255,94,0,0.4)] hover:shadow-[0_0_30px_rgba(255,94,0,0.6)] flex justify-center items-center gap-2">
                     <span v-if="isLoading">Analyzing...</span>
                     <span v-else>Analyze Timetable &rarr;</span>
                 </button>
-                <div v-if="errorMsg" class="p-4 bg-red-950/50 text-red-400 rounded-xl border border-red-900/50 text-sm">
+                <div v-if="errorMsg" class="p-4 bg-red-950/80 text-red-300 rounded-xl border border-red-900 font-medium text-sm shadow-lg">
                     {{ errorMsg }}
                 </div>
             </div>
         </div>
 
-        <div v-if="dataLoaded" class="space-y-8 pt-8 border-t border-dark-border">
+        <div v-if="dataLoaded" class="space-y-8 pt-8 border-t border-[#333]">
             <div class="flex items-center justify-between">
                 <h2 class="text-4xl font-extrabold text-white">Results</h2>
-                <div class="text-sm text-neutral-500">Select courses below to update the visualizer</div>
+                <div class="text-sm text-neutral-400 font-medium">Select courses below to update the visualizer</div>
             </div>
 
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
                 <!-- Sidebar: Courses Selection -->
                 <div class="lg:col-span-1 space-y-8">
                     
-                    <div class="bg-dark-panel p-6 rounded-[2rem] border border-dark-border h-[600px] overflow-y-auto">
-                        <h3 class="text-xl font-bold text-white mb-6 sticky top-0 bg-dark-panel pb-4 border-b border-dark-border z-10">Disciplinary</h3>
+                    <div class="bg-[#111] p-6 rounded-[2rem] border border-[#2a2a2a] h-[600px] overflow-y-auto shadow-xl custom-scroll">
+                        <h3 class="text-xl font-bold text-white mb-6 sticky top-0 bg-[#111] pb-4 border-b border-[#333] z-10">Disciplinary</h3>
                         <div class="space-y-4">
                             <div v-for="course in disciplinary" :key="course.s_no" 
-                                 class="p-4 rounded-xl border transition-colors"
-                                 :class="course.is_ok ? 'bg-[#1a1a1a] border-dark-border hover:border-neutral-600' : 'bg-red-950/20 border-red-900/30 opacity-60'">
+                                 class="p-4 rounded-xl border transition-all"
+                                 :class="course.is_ok ? 'bg-[#1a1a1a] border-[#333] hover:border-[#555] hover:bg-[#222]' : 'bg-red-950/20 border-red-900/30 opacity-60'">
                                 <div class="flex justify-between items-start">
                                     <label class="flex items-start space-x-3 cursor-pointer flex-1">
-                                        <input type="checkbox" :disabled="!course.is_ok" :value="course" v-model="selectedCourses" class="mt-1 w-4 h-4 rounded border-dark-border bg-dark-panel focus:ring-brand-500 cursor-pointer">
+                                        <input type="checkbox" :disabled="!course.is_ok" :value="course" v-model="selectedCourses" class="mt-1 w-4 h-4 rounded border-[#444] bg-[#222] focus:ring-brand-500 cursor-pointer">
                                         <div>
                                             <p class="font-bold text-white leading-tight mb-1">{{ course.title }}</p>
-                                            <p class="text-xs text-neutral-500 font-medium">{{ course.course_no }} &bull; {{ course.dh_string || 'No timing' }}</p>
+                                            <p class="text-xs text-brand-500 font-semibold">{{ course.course_no }} &bull; {{ course.dh_string || 'No timing' }}</p>
                                         </div>
                                     </label>
                                 </div>
@@ -194,18 +194,18 @@
                         </div>
                     </div>
 
-                    <div class="bg-dark-panel p-6 rounded-[2rem] border border-dark-border h-[600px] overflow-y-auto">
-                        <h3 class="text-xl font-bold text-white mb-6 sticky top-0 bg-dark-panel pb-4 border-b border-dark-border z-10">Humanities</h3>
+                    <div class="bg-[#111] p-6 rounded-[2rem] border border-[#2a2a2a] h-[600px] overflow-y-auto shadow-xl custom-scroll">
+                        <h3 class="text-xl font-bold text-white mb-6 sticky top-0 bg-[#111] pb-4 border-b border-[#333] z-10">Humanities</h3>
                         <div class="space-y-4">
                             <div v-for="course in humanities" :key="course.s_no" 
-                                 class="p-4 rounded-xl border transition-colors"
-                                 :class="course.is_ok ? 'bg-[#1a1a1a] border-dark-border hover:border-neutral-600' : 'bg-red-950/20 border-red-900/30 opacity-60'">
+                                 class="p-4 rounded-xl border transition-all"
+                                 :class="course.is_ok ? 'bg-[#1a1a1a] border-[#333] hover:border-[#555] hover:bg-[#222]' : 'bg-red-950/20 border-red-900/30 opacity-60'">
                                 <div class="flex justify-between items-start">
                                     <label class="flex items-start space-x-3 cursor-pointer flex-1">
-                                        <input type="checkbox" :disabled="!course.is_ok" :value="course" v-model="selectedCourses" class="mt-1 w-4 h-4 rounded border-dark-border bg-dark-panel focus:ring-brand-500 cursor-pointer">
+                                        <input type="checkbox" :disabled="!course.is_ok" :value="course" v-model="selectedCourses" class="mt-1 w-4 h-4 rounded border-[#444] bg-[#222] focus:ring-brand-500 cursor-pointer">
                                         <div>
                                             <p class="font-bold text-white leading-tight mb-1">{{ course.title }}</p>
-                                            <p class="text-xs text-neutral-500 font-medium">{{ course.course_no }} &bull; {{ course.dh_string || 'No timing' }}</p>
+                                            <p class="text-xs text-brand-500 font-semibold">{{ course.course_no }} &bull; {{ course.dh_string || 'No timing' }}</p>
                                         </div>
                                     </label>
                                 </div>
@@ -219,14 +219,14 @@
 
                 <!-- Main: Timetable View -->
                 <div class="lg:col-span-2">
-                    <div class="bg-dark-panel p-8 rounded-[2rem] border border-dark-border overflow-x-auto sticky top-8">
+                    <div class="bg-[#111] p-8 rounded-[2rem] border border-[#2a2a2a] overflow-x-auto sticky top-8 shadow-xl">
                         <h3 class="text-2xl font-bold text-white mb-6 flex items-center gap-3">
                             <span class="w-2 h-8 bg-brand-500 rounded-full inline-block"></span>
                             Visualizer
                         </h3>
                         <table class="w-full text-left border-collapse min-w-max">
                             <thead>
-                                <tr class="text-neutral-400 uppercase text-xs tracking-widest font-semibold border-b border-dark-border">
+                                <tr class="text-neutral-300 uppercase text-xs tracking-widest font-bold border-b border-[#333]">
                                     <th class="p-4 pl-0">Hr</th>
                                     <th class="p-4">Time</th>
                                     <th class="p-4">Mon</th>
@@ -237,14 +237,14 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                <tr v-for="row in combinedTimetable" :key="row.Hour" class="border-b border-dark-border/50 hover:bg-[#1a1a1a] transition-colors last:border-0">
-                                    <td class="p-4 pl-0 font-bold text-neutral-500">{{ row.Hour }}</td>
-                                    <td class="p-4 text-xs text-neutral-500 whitespace-nowrap">{{ row.Time }}</td>
-                                    <td class="p-4 text-sm font-medium text-white" v-html="renderCell(row.Monday)"></td>
-                                    <td class="p-4 text-sm font-medium text-white" v-html="renderCell(row.Tuesday)"></td>
-                                    <td class="p-4 text-sm font-medium text-white" v-html="renderCell(row.Wednesday)"></td>
-                                    <td class="p-4 text-sm font-medium text-white" v-html="renderCell(row.Thursday)"></td>
-                                    <td class="p-4 text-sm font-medium text-white" v-html="renderCell(row.Friday)"></td>
+                                <tr v-for="row in combinedTimetable" :key="row.Hour" class="border-b border-[#333] hover:bg-[#1a1a1a] transition-colors last:border-0">
+                                    <td class="p-4 pl-0 font-black text-neutral-400">{{ row.Hour }}</td>
+                                    <td class="p-4 text-xs font-semibold text-neutral-400 whitespace-nowrap">{{ row.Time }}</td>
+                                    <td class="p-4 text-sm font-bold text-white" v-html="renderCell(row.Monday)"></td>
+                                    <td class="p-4 text-sm font-bold text-white" v-html="renderCell(row.Tuesday)"></td>
+                                    <td class="p-4 text-sm font-bold text-white" v-html="renderCell(row.Wednesday)"></td>
+                                    <td class="p-4 text-sm font-bold text-white" v-html="renderCell(row.Thursday)"></td>
+                                    <td class="p-4 text-sm font-bold text-white" v-html="renderCell(row.Friday)"></td>
                                 </tr>
                             </tbody>
                         </table>
