@@ -94,7 +94,7 @@
             <div class="bg-[#111] rounded-[2rem] p-8 border border-[#2a2a2a] shadow-xl">
                 <div class="mb-6">
                     <h2 class="text-2xl font-bold text-white mb-2">01. Core Timetable</h2>
-                    <p class="text-neutral-400 text-sm">Type your Core Course IDs (e.g. <code class="text-white font-bold bg-[#333] px-1.5 py-0.5 rounded">CS F372</code>) into the grid below. Fill 2 blocks if it spans 2 periods.</p>
+                    <p class="text-neutral-400 text-sm">Type your Core Course IDs (e.g. <code class="text-white font-bold bg-[#333] px-1.5 py-0.5 rounded">CS F372</code>). <span class="text-brand-500 font-semibold">Tip: You can copy-paste a block of cells directly from Excel!</span></p>
                 </div>
                 <div class="overflow-x-auto rounded-xl border border-[#333] bg-[#1a1a1a]">
                     <table class="w-full text-sm text-center border-collapse">
@@ -113,11 +113,11 @@
                             <tr v-for="row in manualGrid" :key="row.hour" class="border-b border-[#333] last:border-0">
                                 <td class="p-3 border-r border-[#333] font-black bg-[#222] text-neutral-400 text-xs">{{ row.hour }}</td>
                                 <td class="p-3 border-r border-[#333] font-bold bg-[#1a1a1a] text-neutral-400 text-xs whitespace-nowrap">{{ row.time }}</td>
-                                <td class="grid-cell border-r border-[#333]"><input v-model="row.Monday" class="grid-input" placeholder="---" /></td>
-                                <td class="grid-cell border-r border-[#333]"><input v-model="row.Tuesday" class="grid-input" placeholder="---" /></td>
-                                <td class="grid-cell border-r border-[#333]"><input v-model="row.Wednesday" class="grid-input" placeholder="---" /></td>
-                                <td class="grid-cell border-r border-[#333]"><input v-model="row.Thursday" class="grid-input" placeholder="---" /></td>
-                                <td class="grid-cell"><input v-model="row.Friday" class="grid-input" placeholder="---" /></td>
+                                <td class="grid-cell border-r border-[#333]"><input v-model="row.Monday" @paste="handlePaste($event, row.hour-1, 'Monday')" class="grid-input" placeholder="---" /></td>
+                                <td class="grid-cell border-r border-[#333]"><input v-model="row.Tuesday" @paste="handlePaste($event, row.hour-1, 'Tuesday')" class="grid-input" placeholder="---" /></td>
+                                <td class="grid-cell border-r border-[#333]"><input v-model="row.Wednesday" @paste="handlePaste($event, row.hour-1, 'Wednesday')" class="grid-input" placeholder="---" /></td>
+                                <td class="grid-cell border-r border-[#333]"><input v-model="row.Thursday" @paste="handlePaste($event, row.hour-1, 'Thursday')" class="grid-input" placeholder="---" /></td>
+                                <td class="grid-cell"><input v-model="row.Friday" @paste="handlePaste($event, row.hour-1, 'Friday')" class="grid-input" placeholder="---" /></td>
                             </tr>
                         </tbody>
                     </table>
@@ -330,6 +330,37 @@
                 }
             },
             methods: {
+                handlePaste(event, rowIndex, day) {
+                    const pasteData = (event.clipboardData || window.clipboardData).getData('text');
+                    if (!pasteData) return;
+
+                    // Only handle if it's a multi-cell paste (contains tabs or newlines)
+                    if (!pasteData.includes('\t') && !pasteData.includes('\n')) return;
+
+                    event.preventDefault();
+                    
+                    const rows = pasteData.split(/\r\n|\n|\r/);
+                    const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
+                    const startDayIndex = days.indexOf(day);
+
+                    for (let r = 0; r < rows.length; r++) {
+                        if (rowIndex + r >= 9) break; // stay within grid rows
+                        if (!rows[r]) continue;
+                        
+                        const cols = rows[r].split('\t');
+                        for (let c = 0; c < cols.length; c++) {
+                            if (startDayIndex + c >= days.length) break; // stay within grid columns
+                            
+                            const targetDay = days[startDayIndex + c];
+                            // Don't overwrite with empty strings if there are actual gaps in excel,
+                            // but usually we want to clear it or set it. We'll set it.
+                            let val = cols[c].trim();
+                            // Clean up Excel artifacts
+                            val = val.replace(/^["']|["']$/g, '');
+                            this.manualGrid[rowIndex + r][targetDay] = val;
+                        }
+                    }
+                },
                 async fetchCatalog() {
                     try {
                         const res = await fetch('/api/catalog');
