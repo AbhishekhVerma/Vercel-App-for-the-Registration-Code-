@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Course Registration Scheduler</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Dancing+Script&display=swap" rel="stylesheet">
+</head>
+<body class="bg-gray-50 text-gray-800 font-sans p-6">
+    <div id="app" class="max-w-7xl mx-auto space-y-6">
+        <header class="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+            <h1 class="text-3xl font-bold text-indigo-600 mb-2">Course Timetable Scheduler</h1>
+            <p class="text-gray-500 mb-4">Upload your `Main.xlsx` file to automatically check for clashes and visualize your final schedule.</p>
+            
+            <div class="flex items-center space-x-4">
+                <input type="file" @change="handleFileUpload" accept=".xlsx" class="block w-full text-sm text-gray-500
+                    file:mr-4 file:py-2 file:px-4
+                    file:rounded-full file:border-0
+                    file:text-sm file:font-semibold
+                    file:bg-indigo-50 file:text-indigo-700
+                    hover:file:bg-indigo-100 transition-colors" />
+                <button @click="uploadFile" :disabled="!selectedFile || isLoading"
+                        class="bg-indigo-600 text-white px-6 py-2 rounded-full font-medium hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
+                    <span v-if="isLoading">Analyzing...</span>
+                    <span v-else>Analyze Courses</span>
+                </button>
+            </div>
+            <div v-if="errorMsg" class="mt-4 p-3 bg-red-100 text-red-700 rounded-md border border-red-200">
+                {{ errorMsg }}
+            </div>
+        </header>
+
+        <div v-if="dataLoaded" class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <!-- Sidebar: Courses Selection -->
+            <div class="lg:col-span-1 space-y-6">
+                
+                <div class="bg-white p-4 rounded-lg shadow-sm border border-gray-200 h-96 overflow-y-auto">
+                    <h2 class="text-xl font-bold text-gray-700 mb-4 sticky top-0 bg-white pb-2 border-b">Disciplinary Courses</h2>
+                    <div class="space-y-3">
+                        <div v-for="course in disciplinary" :key="course.s_no" 
+                             class="p-3 rounded-md border text-sm"
+                             :class="course.is_ok ? 'bg-green-50 border-green-200' : 'bg-red-50 border-red-200 opacity-70'">
+                            <div class="flex justify-between items-start">
+                                <label class="flex items-start space-x-2 cursor-pointer flex-1">
+                                    <input type="checkbox" :disabled="!course.is_ok" :value="course" v-model="selectedCourses" class="mt-1 rounded text-indigo-600 focus:ring-indigo-500">
+                                    <div>
+                                        <p class="font-semibold text-gray-900">{{ course.title }}</p>
+                                        <p class="text-xs text-gray-500">{{ course.course_no }} | {{ course.dh_string || 'No timing' }}</p>
+                                    </div>
+                                </label>
+                            </div>
+                            <p v-if="!course.is_ok" class="text-xs text-red-600 mt-2 font-medium">Clash: {{ course.status }}</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-white p-4 rounded-lg shadow-sm border border-gray-200 h-96 overflow-y-auto">
+                    <h2 class="text-xl font-bold text-gray-700 mb-4 sticky top-0 bg-white pb-2 border-b">Humanities Option</h2>
+                    <div class="space-y-3">
+                        <div v-for="course in humanities" :key="course.s_no" 
+                             class="p-3 rounded-md border text-sm"
+                             :class="course.is_ok ? 'bg-green-50 border-green-200' : 'bg-red-50 border-red-200 opacity-70'">
+                            <div class="flex justify-between items-start">
+                                <label class="flex items-start space-x-2 cursor-pointer flex-1">
+                                    <input type="checkbox" :disabled="!course.is_ok" :value="course" v-model="selectedCourses" class="mt-1 rounded text-indigo-600 focus:ring-indigo-500">
+                                    <div>
+                                        <p class="font-semibold text-gray-900">{{ course.title }}</p>
+                                        <p class="text-xs text-gray-500">{{ course.course_no }} | {{ course.dh_string || 'No timing' }}</p>
+                                    </div>
+                                </label>
+                            </div>
+                            <p v-if="!course.is_ok" class="text-xs text-red-600 mt-2 font-medium">Clash: {{ course.status }}</p>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Main: Timetable View -->
+            <div class="lg:col-span-2">
+                <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-200 overflow-x-auto">
+                    <h2 class="text-xl font-bold text-gray-700 mb-4">Final Timetable Visualizer</h2>
+                    <table class="w-full text-left border-collapse min-w-max">
+                        <thead>
+                            <tr class="bg-gray-100 text-gray-600 uppercase text-xs tracking-wider">
+                                <th class="p-3 border">Hour</th>
+                                <th class="p-3 border">Time</th>
+                                <th class="p-3 border">Monday</th>
+                                <th class="p-3 border">Tuesday</th>
+                                <th class="p-3 border">Wednesday</th>
+                                <th class="p-3 border">Thursday</th>
+                                <th class="p-3 border">Friday</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr v-for="row in combinedTimetable" :key="row.Hour" class="border-b hover:bg-gray-50">
+                                <td class="p-3 border font-semibold text-gray-700">{{ row.Hour }}</td>
+                                <td class="p-3 border text-xs text-gray-500 whitespace-nowrap">{{ row.Time }}</td>
+                                <td class="p-3 border text-sm" v-html="renderCell(row.Monday)"></td>
+                                <td class="p-3 border text-sm" v-html="renderCell(row.Tuesday)"></td>
+                                <td class="p-3 border text-sm" v-html="renderCell(row.Wednesday)"></td>
+                                <td class="p-3 border text-sm" v-html="renderCell(row.Thursday)"></td>
+                                <td class="p-3 border text-sm" v-html="renderCell(row.Friday)"></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div class="mt-8 text-right pr-4 pb-4">
+            <span style="font-family: 'Dancing Script', cursive;" class="text-lg text-gray-400 opacity-80">yw yours truly Abhishekh V</span>
+        </div>
+    </div>
+
+    <script>
+        const { createApp } = Vue;
+
+        createApp({
+            data() {
+                return {
+                    selectedFile: null,
+                    isLoading: false,
+                    dataLoaded: false,
+                    errorMsg: '',
+                    baseTimetable: [],
+                    disciplinary: [],
+                    humanities: [],
+                    selectedCourses: []
+                }
+            },
+            computed: {
+                combinedTimetable() {
+                    // Deep copy base timetable
+                    let tt = JSON.parse(JSON.stringify(this.baseTimetable));
+                    
+                    // Add selected courses
+                    this.selectedCourses.forEach(course => {
+                        course.dh_parsed.forEach(slot => {
+                            let day = slot[0];
+                            let hour = slot[1];
+                            let rowIndex = tt.findIndex(r => r.Hour === hour);
+                            if (rowIndex !== -1) {
+                                let current = tt[rowIndex][day];
+                                let added = `<span class="text-indigo-600 font-bold block mt-1">+ ${course.title}</span>`;
+                                tt[rowIndex][day] = current ? current + added : added;
+                            }
+                        });
+                    });
+                    
+                    return tt;
+                }
+            },
+            methods: {
+                handleFileUpload(event) {
+                    this.selectedFile = event.target.files[0];
+                    this.errorMsg = '';
+                },
+                async uploadFile() {
+                    if (!this.selectedFile) return;
+                    this.isLoading = true;
+                    this.errorMsg = '';
+                    this.selectedCourses = [];
+
+                    const formData = new FormData();
+                    formData.append('file', this.selectedFile);
+
+                    try {
+                        const res = await fetch('/api/analyze', {
+                            method: 'POST',
+                            body: formData
+                        });
+                        const data = await res.json();
+                        
+                        if (!res.ok) {
+                            throw new Error(data.error || 'Failed to process file');
+                        }
+
+                        this.baseTimetable = data.base_timetable;
+                        this.disciplinary = data.disciplinary;
+                        this.humanities = data.humanities;
+                        this.dataLoaded = true;
+                    } catch (err) {
+                        this.errorMsg = err.message;
+                    } finally {
+                        this.isLoading = false;
+                    }
+                },
+                renderCell(content) {
+                    if (!content) return '';
+                    // Style base courses normally, selected courses are styled via HTML injected in computed prop
+                    return content;
+                }
+            }
+        }).mount('#app')
+    </script>
+</body>
+</html>
