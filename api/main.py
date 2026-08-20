@@ -84,9 +84,14 @@ def analyze():
         core_courses = set()
         base_timetable = []
         
+        times = [
+            "7:30-8:20", "8:25-9:15", "9:20-10:10", "10:15-11:05",
+            "11:10-12:00", "12:05-12:55", "13:00-13:50", "13:55-14:45", "14:50-15:40"
+        ]
+        
         # Initialize empty base timetable
         for h in range(1, 10):
-            base_timetable.append({'Hour': h, 'Time': f'Period {h}', 'Monday': '', 'Tuesday': '', 'Wednesday': '', 'Thursday': '', 'Friday': ''})
+            base_timetable.append({'Hour': h, 'Time': times[h-1], 'Monday': '', 'Tuesday': '', 'Wednesday': '', 'Thursday': '', 'Friday': ''})
             
         for cell in grid_data:
             day = cell['day']

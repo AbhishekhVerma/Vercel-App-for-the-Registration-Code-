@@ -96,6 +96,7 @@
                         <thead class="bg-[#1a1a1a] text-neutral-400 text-xs uppercase tracking-widest font-semibold">
                             <tr>
                                 <th class="p-4 border-b border-r border-dark-border">Hr</th>
+                                <th class="p-4 border-b border-r border-dark-border whitespace-nowrap">Time</th>
                                 <th class="p-4 border-b border-r border-dark-border">Mon</th>
                                 <th class="p-4 border-b border-r border-dark-border">Tue</th>
                                 <th class="p-4 border-b border-r border-dark-border">Wed</th>
@@ -104,13 +105,14 @@
                             </tr>
                         </thead>
                         <tbody>
-                            <tr v-for="h in 9" :key="h" class="border-b border-dark-border last:border-0">
-                                <td class="p-3 border-r border-dark-border font-bold bg-[#1a1a1a] text-neutral-500 text-xs">{{ h }}</td>
-                                <td class="grid-cell border-r border-dark-border"><input v-model="manualGrid[h-1].Monday" class="grid-input" placeholder="---" /></td>
-                                <td class="grid-cell border-r border-dark-border"><input v-model="manualGrid[h-1].Tuesday" class="grid-input" placeholder="---" /></td>
-                                <td class="grid-cell border-r border-dark-border"><input v-model="manualGrid[h-1].Wednesday" class="grid-input" placeholder="---" /></td>
-                                <td class="grid-cell border-r border-dark-border"><input v-model="manualGrid[h-1].Thursday" class="grid-input" placeholder="---" /></td>
-                                <td class="grid-cell"><input v-model="manualGrid[h-1].Friday" class="grid-input" placeholder="---" /></td>
+                            <tr v-for="row in manualGrid" :key="row.hour" class="border-b border-dark-border last:border-0">
+                                <td class="p-3 border-r border-dark-border font-bold bg-[#1a1a1a] text-neutral-500 text-xs">{{ row.hour }}</td>
+                                <td class="p-3 border-r border-dark-border font-medium bg-[#141414] text-neutral-600 text-xs whitespace-nowrap">{{ row.time }}</td>
+                                <td class="grid-cell border-r border-dark-border"><input v-model="row.Monday" class="grid-input" placeholder="---" /></td>
+                                <td class="grid-cell border-r border-dark-border"><input v-model="row.Tuesday" class="grid-input" placeholder="---" /></td>
+                                <td class="grid-cell border-r border-dark-border"><input v-model="row.Wednesday" class="grid-input" placeholder="---" /></td>
+                                <td class="grid-cell border-r border-dark-border"><input v-model="row.Thursday" class="grid-input" placeholder="---" /></td>
+                                <td class="grid-cell"><input v-model="row.Friday" class="grid-input" placeholder="---" /></td>
                             </tr>
                         </tbody>
                     </table>
@@ -262,9 +264,13 @@
 
         createApp({
             data() {
+                const times = [
+                    "7:30-8:20", "8:25-9:15", "9:20-10:10", "10:15-11:05",
+                    "11:10-12:00", "12:05-12:55", "13:00-13:50", "13:55-14:45", "14:50-15:40"
+                ];
                 const manualGrid = [];
                 for(let i=1; i<=9; i++) {
-                    manualGrid.push({ hour: i, Monday: '', Tuesday: '', Wednesday: '', Thursday: '', Friday: '' });
+                    manualGrid.push({ hour: i, time: times[i-1], Monday: '', Tuesday: '', Wednesday: '', Thursday: '', Friday: '' });
                 }
 
                 return {
