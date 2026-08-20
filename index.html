@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -7,183 +7,253 @@
     <link rel="icon" type="image/jpeg" href="/favicon.jpg">
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Dancing+Script&display=swap" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Dancing+Script&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+                        cursive: ['"Dancing Script"', 'cursive']
+                    },
+                    colors: {
+                        brand: {
+                            500: '#ff5e00',
+                            600: '#e65400',
+                        },
+                        dark: {
+                            bg: '#0a0a0a',
+                            panel: '#141414',
+                            border: '#262626'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
     <style>
-        .grid-input { width: 100%; box-sizing: border-box; border: none; background: transparent; outline: none; text-align: center; }
-        .grid-cell { padding: 4px; border: 1px solid #e5e7eb; transition: background 0.2s; }
-        .grid-cell:hover, .grid-cell:focus-within { background-color: #f3f4f6; }
+        body { background-color: #0a0a0a; color: #ffffff; }
+        .grid-input { width: 100%; box-sizing: border-box; border: none; background: transparent; outline: none; text-align: center; color: white; }
+        .grid-input::placeholder { color: #525252; }
+        .grid-cell { padding: 4px; border: 1px solid #262626; transition: background 0.2s; }
+        .grid-cell:hover, .grid-cell:focus-within { background-color: #1a1a1a; }
+        
+        /* Custom scrollbar for dark theme */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #0a0a0a; }
+        ::-webkit-scrollbar-thumb { background: #262626; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #404040; }
+        
+        /* Custom checkbox */
+        input[type="checkbox"] {
+            accent-color: #ff5e00;
+        }
     </style>
 </head>
-<body class="bg-gray-50 text-gray-800 font-sans p-6">
-    <div id="app" class="max-w-7xl mx-auto space-y-6">
-        <header class="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-            <h1 class="text-3xl font-bold text-indigo-600 mb-2">Course Timetable Scheduler</h1>
-            <p class="text-gray-500 mb-6">Manually input your core courses directly on the grid, configure your electives, and hit analyze!</p>
+<body class="font-sans antialiased selection:bg-brand-500 selection:text-white">
+    <div id="app" class="max-w-7xl mx-auto px-6 py-12 space-y-12">
+        <!-- Hero Section -->
+        <header class="relative rounded-[2rem] overflow-hidden bg-dark-panel border border-dark-border px-8 py-16 md:px-16 md:py-24">
+            <!-- Subtle gradient glow -->
+            <div class="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-[#ff5e00]/20 to-transparent opacity-50 pointer-events-none"></div>
             
-            <div class="mb-6 bg-indigo-50 p-4 rounded-lg border border-indigo-100">
-                <h2 class="text-lg font-bold text-indigo-800 mb-2">Master Course Database</h2>
-                <select v-model="masterMode" class="block w-full p-2 border border-indigo-200 rounded-md text-sm mb-2 focus:ring-indigo-500 focus:border-indigo-500 bg-white">
-                    <option value="default">2026-27 Semester 1 Timetable (Default)</option>
-                    <option value="upload">Upload Custom Timetable (.xlsx)</option>
-                </select>
-                <input v-if="masterMode === 'upload'" type="file" @change="e => masterFile = e.target.files[0]" accept=".xlsx" class="block w-full text-xs text-indigo-700 file:mr-4 file:py-1 file:px-3 file:rounded file:border-0 file:bg-indigo-100 file:text-indigo-800 mt-2" />
-                <p v-if="masterMode === 'upload'" class="text-xs text-indigo-600 mt-2">Note: Checklists below will be unavailable. Please select 'Upload Custom Excel List' for electives if your master file doesn't have those sheets.</p>
-            </div>
-
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                <!-- Manual Timetable Entry -->
-                <div>
-                    <h2 class="text-xl font-bold text-gray-700 mb-2">1. Core Timetable</h2>
-                    <p class="text-sm text-gray-500 mb-2">Type your Core Course IDs (e.g. <code>CS F372</code>) into the grid below. Fill 2 blocks if it spans 2 periods.</p>
-                    <div class="overflow-x-auto border border-gray-200 rounded-md">
-                        <table class="w-full text-sm text-center">
-                            <thead class="bg-gray-100 text-gray-600 text-xs uppercase">
-                                <tr>
-                                    <th class="p-2 border">Hr</th>
-                                    <th class="p-2 border">Mon</th>
-                                    <th class="p-2 border">Tue</th>
-                                    <th class="p-2 border">Wed</th>
-                                    <th class="p-2 border">Thu</th>
-                                    <th class="p-2 border">Fri</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr v-for="h in 9" :key="h">
-                                    <td class="p-2 border font-bold bg-gray-50 text-xs">{{ h }}</td>
-                                    <td class="grid-cell"><input v-model="manualGrid[h-1].Monday" class="grid-input text-xs" placeholder="---" /></td>
-                                    <td class="grid-cell"><input v-model="manualGrid[h-1].Tuesday" class="grid-input text-xs" placeholder="---" /></td>
-                                    <td class="grid-cell"><input v-model="manualGrid[h-1].Wednesday" class="grid-input text-xs" placeholder="---" /></td>
-                                    <td class="grid-cell"><input v-model="manualGrid[h-1].Thursday" class="grid-input text-xs" placeholder="---" /></td>
-                                    <td class="grid-cell"><input v-model="manualGrid[h-1].Friday" class="grid-input text-xs" placeholder="---" /></td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-
-                <!-- Preferences -->
-                <div class="space-y-6">
-                    <div>
-                        <h2 class="text-xl font-bold text-gray-700 mb-2">2. Disciplinary Electives</h2>
-                        <select v-model="discMode" class="block w-full p-2 border border-gray-300 rounded-md text-sm mb-2 focus:ring-indigo-500 focus:border-indigo-500">
-                            <option value="default">Default (Computer Science)</option>
-                            <option value="upload">Upload Custom Excel List</option>
+            <div class="relative z-10 max-w-3xl">
+                <p class="text-brand-500 font-semibold tracking-wider uppercase text-sm mb-4">Course Scheduler</p>
+                <h1 class="text-5xl md:text-7xl font-extrabold tracking-tight mb-6 leading-[1.1]">
+                    Build your perfect<br/>
+                    <span class="text-transparent bg-clip-text bg-gradient-to-r from-[#ff5e00] to-[#ffaa00]">Timetable</span>
+                </h1>
+                <p class="text-neutral-400 text-lg md:text-xl mb-10 max-w-xl font-light">
+                    Manually input your core courses, configure your electives, and let our engine instantly analyze and highlight clashes for you.
+                </p>
+                
+                <div class="flex flex-col sm:flex-row items-center gap-4 bg-[#1a1a1a] p-2 rounded-full border border-dark-border w-fit">
+                    <div class="pl-4 pr-2 py-2 flex items-center gap-3">
+                        <span class="text-neutral-400 text-sm font-medium">Master Database</span>
+                        <select v-model="masterMode" class="bg-transparent text-white border-none focus:ring-0 text-sm font-semibold outline-none cursor-pointer">
+                            <option value="default" class="bg-dark-panel text-white">2026-27 Sem 1 (Default)</option>
+                            <option value="upload" class="bg-dark-panel text-white">Upload Custom (.xlsx)</option>
                         </select>
-                        <input v-if="discMode === 'upload'" type="file" @change="e => discFile = e.target.files[0]" accept=".xlsx" class="block w-full text-xs text-gray-500 file:mr-4 file:py-1 file:px-3 file:rounded file:border-0 file:bg-indigo-50 file:text-indigo-700" />
                     </div>
-
-                    <div>
-                        <h2 class="text-xl font-bold text-gray-700 mb-2">3. Humanities Electives</h2>
-                        <select v-model="humMode" class="block w-full p-2 border border-gray-300 rounded-md text-sm mb-2 focus:ring-indigo-500 focus:border-indigo-500">
-                            <option value="default">Default (All Engineering Degrees)</option>
-                            <option value="upload">Upload Custom Excel List</option>
-                        </select>
-                        <input v-if="humMode === 'upload'" type="file" @change="e => humFile = e.target.files[0]" accept=".xlsx" class="block w-full text-xs text-gray-500 file:mr-4 file:py-1 file:px-3 file:rounded file:border-0 file:bg-indigo-50 file:text-indigo-700" />
-                        
-                        <div v-if="humMode === 'default' && catalogHumanities.length" class="mt-2 border rounded-md p-3 h-48 overflow-y-auto bg-gray-50 text-sm">
-                            <p class="font-semibold mb-2 text-gray-600 text-xs">Uncheck to exclude from search:</p>
-                            <div v-for="h in catalogHumanities" :key="h.id" class="flex items-center space-x-2 mb-1">
-                                <input type="checkbox" :id="'hum_'+h.id" :value="h.id" v-model="includedHumanities" class="rounded text-indigo-600 focus:ring-indigo-500">
-                                <label :for="'hum_'+h.id" class="text-gray-700 text-xs"><span class="font-bold">{{ h.id }}</span> - {{ h.title }}</label>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="pt-4 border-t">
-                        <button @click="analyze" :disabled="isLoading" class="w-full bg-indigo-600 text-white px-6 py-3 rounded-md font-bold hover:bg-indigo-700 disabled:opacity-50 transition-colors shadow-sm">
-                            <span v-if="isLoading">Analyzing...</span>
-                            <span v-else>Analyze & Find Courses</span>
-                        </button>
-                        <div v-if="errorMsg" class="mt-3 p-3 bg-red-100 text-red-700 rounded-md border border-red-200 text-sm">
-                            {{ errorMsg }}
-                        </div>
-                    </div>
+                    <input v-if="masterMode === 'upload'" type="file" @change="e => masterFile = e.target.files[0]" accept=".xlsx" class="text-xs text-neutral-400 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:bg-[#262626] file:text-white hover:file:bg-[#333] transition-colors cursor-pointer" />
                 </div>
+                <p v-if="masterMode === 'upload'" class="text-xs text-brand-500 mt-4 font-medium">Note: Checklists below will be unavailable. Please select 'Upload Custom' for electives if needed.</p>
             </div>
         </header>
 
-        <div v-if="dataLoaded" class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <!-- Sidebar: Courses Selection -->
-            <div class="lg:col-span-1 space-y-6">
-                
-                <div class="bg-white p-4 rounded-lg shadow-sm border border-gray-200 h-96 overflow-y-auto">
-                    <h2 class="text-xl font-bold text-gray-700 mb-4 sticky top-0 bg-white pb-2 border-b">Disciplinary Courses</h2>
-                    <div class="space-y-3">
-                        <div v-for="course in disciplinary" :key="course.s_no" 
-                             class="p-3 rounded-md border text-sm"
-                             :class="course.is_ok ? 'bg-green-50 border-green-200' : 'bg-red-50 border-red-200 opacity-70'">
-                            <div class="flex justify-between items-start">
-                                <label class="flex items-start space-x-2 cursor-pointer flex-1">
-                                    <input type="checkbox" :disabled="!course.is_ok" :value="course" v-model="selectedCourses" class="mt-1 rounded text-indigo-600 focus:ring-indigo-500">
-                                    <div>
-                                        <p class="font-semibold text-gray-900">{{ course.title }}</p>
-                                        <p class="text-xs text-gray-500">{{ course.course_no }} | {{ course.dh_string || 'No timing' }}</p>
-                                    </div>
-                                </label>
-                            </div>
-                            <p v-if="!course.is_ok" class="text-xs text-red-600 mt-2 font-medium">Clash: {{ course.status }}</p>
-                        </div>
-                        <p v-if="!disciplinary.length" class="text-gray-500 text-sm">No disciplinary courses found.</p>
-                    </div>
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <!-- Manual Timetable Entry -->
+            <div class="bg-dark-panel rounded-[2rem] p-8 border border-dark-border">
+                <div class="mb-6">
+                    <h2 class="text-2xl font-bold text-white mb-2">01. Core Timetable</h2>
+                    <p class="text-neutral-400 text-sm">Type your Core Course IDs (e.g. <code class="text-brand-500 bg-[#262626] px-1.5 py-0.5 rounded">CS F372</code>) into the grid below. Fill 2 blocks if it spans 2 periods.</p>
                 </div>
-
-                <div class="bg-white p-4 rounded-lg shadow-sm border border-gray-200 h-96 overflow-y-auto">
-                    <h2 class="text-xl font-bold text-gray-700 mb-4 sticky top-0 bg-white pb-2 border-b">Humanities Option</h2>
-                    <div class="space-y-3">
-                        <div v-for="course in humanities" :key="course.s_no" 
-                             class="p-3 rounded-md border text-sm"
-                             :class="course.is_ok ? 'bg-green-50 border-green-200' : 'bg-red-50 border-red-200 opacity-70'">
-                            <div class="flex justify-between items-start">
-                                <label class="flex items-start space-x-2 cursor-pointer flex-1">
-                                    <input type="checkbox" :disabled="!course.is_ok" :value="course" v-model="selectedCourses" class="mt-1 rounded text-indigo-600 focus:ring-indigo-500">
-                                    <div>
-                                        <p class="font-semibold text-gray-900">{{ course.title }}</p>
-                                        <p class="text-xs text-gray-500">{{ course.course_no }} | {{ course.dh_string || 'No timing' }}</p>
-                                    </div>
-                                </label>
-                            </div>
-                            <p v-if="!course.is_ok" class="text-xs text-red-600 mt-2 font-medium">Clash: {{ course.status }}</p>
-                        </div>
-                        <p v-if="!humanities.length" class="text-gray-500 text-sm">No humanities courses found.</p>
-                    </div>
-                </div>
-
-            </div>
-
-            <!-- Main: Timetable View -->
-            <div class="lg:col-span-2">
-                <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-200 overflow-x-auto">
-                    <h2 class="text-xl font-bold text-gray-700 mb-4">Final Timetable Visualizer</h2>
-                    <table class="w-full text-left border-collapse min-w-max">
-                        <thead>
-                            <tr class="bg-gray-100 text-gray-600 uppercase text-xs tracking-wider">
-                                <th class="p-3 border">Hour</th>
-                                <th class="p-3 border">Time</th>
-                                <th class="p-3 border">Monday</th>
-                                <th class="p-3 border">Tuesday</th>
-                                <th class="p-3 border">Wednesday</th>
-                                <th class="p-3 border">Thursday</th>
-                                <th class="p-3 border">Friday</th>
+                <div class="overflow-x-auto rounded-xl border border-dark-border">
+                    <table class="w-full text-sm text-center border-collapse">
+                        <thead class="bg-[#1a1a1a] text-neutral-400 text-xs uppercase tracking-widest font-semibold">
+                            <tr>
+                                <th class="p-4 border-b border-r border-dark-border">Hr</th>
+                                <th class="p-4 border-b border-r border-dark-border">Mon</th>
+                                <th class="p-4 border-b border-r border-dark-border">Tue</th>
+                                <th class="p-4 border-b border-r border-dark-border">Wed</th>
+                                <th class="p-4 border-b border-r border-dark-border">Thu</th>
+                                <th class="p-4 border-b border-dark-border">Fri</th>
                             </tr>
                         </thead>
                         <tbody>
-                            <tr v-for="row in combinedTimetable" :key="row.Hour" class="border-b hover:bg-gray-50">
-                                <td class="p-3 border font-semibold text-gray-700">{{ row.Hour }}</td>
-                                <td class="p-3 border text-xs text-gray-500 whitespace-nowrap">{{ row.Time }}</td>
-                                <td class="p-3 border text-sm" v-html="renderCell(row.Monday)"></td>
-                                <td class="p-3 border text-sm" v-html="renderCell(row.Tuesday)"></td>
-                                <td class="p-3 border text-sm" v-html="renderCell(row.Wednesday)"></td>
-                                <td class="p-3 border text-sm" v-html="renderCell(row.Thursday)"></td>
-                                <td class="p-3 border text-sm" v-html="renderCell(row.Friday)"></td>
+                            <tr v-for="h in 9" :key="h" class="border-b border-dark-border last:border-0">
+                                <td class="p-3 border-r border-dark-border font-bold bg-[#1a1a1a] text-neutral-500 text-xs">{{ h }}</td>
+                                <td class="grid-cell border-r border-dark-border"><input v-model="manualGrid[h-1].Monday" class="grid-input" placeholder="---" /></td>
+                                <td class="grid-cell border-r border-dark-border"><input v-model="manualGrid[h-1].Tuesday" class="grid-input" placeholder="---" /></td>
+                                <td class="grid-cell border-r border-dark-border"><input v-model="manualGrid[h-1].Wednesday" class="grid-input" placeholder="---" /></td>
+                                <td class="grid-cell border-r border-dark-border"><input v-model="manualGrid[h-1].Thursday" class="grid-input" placeholder="---" /></td>
+                                <td class="grid-cell"><input v-model="manualGrid[h-1].Friday" class="grid-input" placeholder="---" /></td>
                             </tr>
                         </tbody>
                     </table>
                 </div>
             </div>
+
+            <!-- Preferences & Action -->
+            <div class="flex flex-col gap-8">
+                <div class="bg-dark-panel rounded-[2rem] p-8 border border-dark-border flex-1">
+                    <div class="mb-8">
+                        <h2 class="text-2xl font-bold text-white mb-2">02. Disciplinary Electives</h2>
+                        <select v-model="discMode" class="block w-full p-3 bg-[#1a1a1a] text-white border border-dark-border rounded-xl text-sm focus:ring-1 focus:ring-brand-500 focus:border-brand-500 outline-none transition-all">
+                            <option value="default">Default (Computer Science)</option>
+                            <option value="upload">Upload Custom Excel List</option>
+                        </select>
+                        <input v-if="discMode === 'upload'" type="file" @change="e => discFile = e.target.files[0]" accept=".xlsx" class="mt-4 block w-full text-xs text-neutral-400 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:bg-[#262626] file:text-white hover:file:bg-[#333] transition-colors cursor-pointer" />
+                    </div>
+
+                    <div>
+                        <h2 class="text-2xl font-bold text-white mb-2">03. Humanities Electives</h2>
+                        <select v-model="humMode" class="block w-full p-3 bg-[#1a1a1a] text-white border border-dark-border rounded-xl text-sm focus:ring-1 focus:ring-brand-500 focus:border-brand-500 outline-none transition-all">
+                            <option value="default">Default (All Engineering Degrees)</option>
+                            <option value="upload">Upload Custom Excel List</option>
+                        </select>
+                        <input v-if="humMode === 'upload'" type="file" @change="e => humFile = e.target.files[0]" accept=".xlsx" class="mt-4 block w-full text-xs text-neutral-400 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:bg-[#262626] file:text-white hover:file:bg-[#333] transition-colors cursor-pointer" />
+                        
+                        <div v-if="humMode === 'default' && catalogHumanities.length" class="mt-4 border border-dark-border rounded-xl p-4 h-48 overflow-y-auto bg-[#1a1a1a] text-sm custom-scroll">
+                            <p class="font-semibold mb-4 text-brand-500 text-xs uppercase tracking-wider">Uncheck to exclude:</p>
+                            <div v-for="h in catalogHumanities" :key="h.id" class="flex items-start space-x-3 mb-3 group cursor-pointer">
+                                <input type="checkbox" :id="'hum_'+h.id" :value="h.id" v-model="includedHumanities" class="mt-1 w-4 h-4 rounded border-dark-border bg-dark-panel focus:ring-brand-500 cursor-pointer">
+                                <label :for="'hum_'+h.id" class="text-neutral-300 text-sm cursor-pointer group-hover:text-white transition-colors leading-tight">
+                                    <span class="font-bold text-white">{{ h.id }}</span><br/>
+                                    <span class="text-neutral-500 text-xs">{{ h.title }}</span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Action Button -->
+                <button @click="analyze" :disabled="isLoading" class="w-full bg-brand-500 text-white px-8 py-5 rounded-full font-bold text-lg hover:bg-brand-600 disabled:opacity-50 transition-all shadow-[0_0_20px_rgba(255,94,0,0.3)] hover:shadow-[0_0_30px_rgba(255,94,0,0.5)] flex justify-center items-center gap-2">
+                    <span v-if="isLoading">Analyzing...</span>
+                    <span v-else>Analyze Timetable &rarr;</span>
+                </button>
+                <div v-if="errorMsg" class="p-4 bg-red-950/50 text-red-400 rounded-xl border border-red-900/50 text-sm">
+                    {{ errorMsg }}
+                </div>
+            </div>
         </div>
 
-        <div class="mt-8 text-right pr-4 pb-4">
-            <span style="font-family: 'Dancing Script', cursive;" class="text-lg text-gray-400 opacity-80">yw yours truly Abhishekh V</span>
+        <div v-if="dataLoaded" class="space-y-8 pt-8 border-t border-dark-border">
+            <div class="flex items-center justify-between">
+                <h2 class="text-4xl font-extrabold text-white">Results</h2>
+                <div class="text-sm text-neutral-500">Select courses below to update the visualizer</div>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <!-- Sidebar: Courses Selection -->
+                <div class="lg:col-span-1 space-y-8">
+                    
+                    <div class="bg-dark-panel p-6 rounded-[2rem] border border-dark-border h-[600px] overflow-y-auto">
+                        <h3 class="text-xl font-bold text-white mb-6 sticky top-0 bg-dark-panel pb-4 border-b border-dark-border z-10">Disciplinary</h3>
+                        <div class="space-y-4">
+                            <div v-for="course in disciplinary" :key="course.s_no" 
+                                 class="p-4 rounded-xl border transition-colors"
+                                 :class="course.is_ok ? 'bg-[#1a1a1a] border-dark-border hover:border-neutral-600' : 'bg-red-950/20 border-red-900/30 opacity-60'">
+                                <div class="flex justify-between items-start">
+                                    <label class="flex items-start space-x-3 cursor-pointer flex-1">
+                                        <input type="checkbox" :disabled="!course.is_ok" :value="course" v-model="selectedCourses" class="mt-1 w-4 h-4 rounded border-dark-border bg-dark-panel focus:ring-brand-500 cursor-pointer">
+                                        <div>
+                                            <p class="font-bold text-white leading-tight mb-1">{{ course.title }}</p>
+                                            <p class="text-xs text-neutral-500 font-medium">{{ course.course_no }} &bull; {{ course.dh_string || 'No timing' }}</p>
+                                        </div>
+                                    </label>
+                                </div>
+                                <p v-if="!course.is_ok" class="text-xs text-red-400 mt-3 font-semibold bg-red-950/50 inline-block px-2 py-1 rounded">Clash: {{ course.status }}</p>
+                            </div>
+                            <p v-if="!disciplinary.length" class="text-neutral-500 text-sm">No disciplinary courses found.</p>
+                        </div>
+                    </div>
+
+                    <div class="bg-dark-panel p-6 rounded-[2rem] border border-dark-border h-[600px] overflow-y-auto">
+                        <h3 class="text-xl font-bold text-white mb-6 sticky top-0 bg-dark-panel pb-4 border-b border-dark-border z-10">Humanities</h3>
+                        <div class="space-y-4">
+                            <div v-for="course in humanities" :key="course.s_no" 
+                                 class="p-4 rounded-xl border transition-colors"
+                                 :class="course.is_ok ? 'bg-[#1a1a1a] border-dark-border hover:border-neutral-600' : 'bg-red-950/20 border-red-900/30 opacity-60'">
+                                <div class="flex justify-between items-start">
+                                    <label class="flex items-start space-x-3 cursor-pointer flex-1">
+                                        <input type="checkbox" :disabled="!course.is_ok" :value="course" v-model="selectedCourses" class="mt-1 w-4 h-4 rounded border-dark-border bg-dark-panel focus:ring-brand-500 cursor-pointer">
+                                        <div>
+                                            <p class="font-bold text-white leading-tight mb-1">{{ course.title }}</p>
+                                            <p class="text-xs text-neutral-500 font-medium">{{ course.course_no }} &bull; {{ course.dh_string || 'No timing' }}</p>
+                                        </div>
+                                    </label>
+                                </div>
+                                <p v-if="!course.is_ok" class="text-xs text-red-400 mt-3 font-semibold bg-red-950/50 inline-block px-2 py-1 rounded">Clash: {{ course.status }}</p>
+                            </div>
+                            <p v-if="!humanities.length" class="text-neutral-500 text-sm">No humanities courses found.</p>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- Main: Timetable View -->
+                <div class="lg:col-span-2">
+                    <div class="bg-dark-panel p-8 rounded-[2rem] border border-dark-border overflow-x-auto sticky top-8">
+                        <h3 class="text-2xl font-bold text-white mb-6 flex items-center gap-3">
+                            <span class="w-2 h-8 bg-brand-500 rounded-full inline-block"></span>
+                            Visualizer
+                        </h3>
+                        <table class="w-full text-left border-collapse min-w-max">
+                            <thead>
+                                <tr class="text-neutral-400 uppercase text-xs tracking-widest font-semibold border-b border-dark-border">
+                                    <th class="p-4 pl-0">Hr</th>
+                                    <th class="p-4">Time</th>
+                                    <th class="p-4">Mon</th>
+                                    <th class="p-4">Tue</th>
+                                    <th class="p-4">Wed</th>
+                                    <th class="p-4">Thu</th>
+                                    <th class="p-4">Fri</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr v-for="row in combinedTimetable" :key="row.Hour" class="border-b border-dark-border/50 hover:bg-[#1a1a1a] transition-colors last:border-0">
+                                    <td class="p-4 pl-0 font-bold text-neutral-500">{{ row.Hour }}</td>
+                                    <td class="p-4 text-xs text-neutral-500 whitespace-nowrap">{{ row.Time }}</td>
+                                    <td class="p-4 text-sm font-medium text-white" v-html="renderCell(row.Monday)"></td>
+                                    <td class="p-4 text-sm font-medium text-white" v-html="renderCell(row.Tuesday)"></td>
+                                    <td class="p-4 text-sm font-medium text-white" v-html="renderCell(row.Wednesday)"></td>
+                                    <td class="p-4 text-sm font-medium text-white" v-html="renderCell(row.Thursday)"></td>
+                                    <td class="p-4 text-sm font-medium text-white" v-html="renderCell(row.Friday)"></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="pt-12 pb-4 flex justify-between items-center text-neutral-600">
+            <div class="text-xs font-medium tracking-wider uppercase">Beta Version 2.0</div>
+            <div class="font-cursive text-xl opacity-50 hover:opacity-100 transition-opacity text-brand-500">yw yours truly Abhishekh V</div>
         </div>
     </div>
 
@@ -192,7 +262,6 @@
 
         createApp({
             data() {
-                // Initialize 9x5 grid
                 const manualGrid = [];
                 for(let i=1; i<=9; i++) {
                     manualGrid.push({ hour: i, Monday: '', Tuesday: '', Wednesday: '', Thursday: '', Friday: '' });
@@ -208,7 +277,7 @@
                     humFile: null,
                     
                     catalogHumanities: [],
-                    includedHumanities: [], // V-model array for checkboxes
+                    includedHumanities: [],
 
                     isLoading: false,
                     dataLoaded: false,
@@ -235,7 +304,7 @@
                             let rowIndex = tt.findIndex(r => r.Hour === hour);
                             if (rowIndex !== -1) {
                                 let current = tt[rowIndex][day];
-                                let added = `<span class="text-indigo-600 font-bold block mt-1">+ ${course.title}</span>`;
+                                let added = `<span class="text-brand-500 font-bold block mt-1">+ ${course.title}</span>`;
                                 tt[rowIndex][day] = current ? current + added : added;
                             }
                         });
@@ -251,7 +320,6 @@
                         if (res.ok) {
                             const data = await res.json();
                             this.catalogHumanities = data.humanities || [];
-                            // By default include all
                             this.includedHumanities = this.catalogHumanities.map(h => h.id);
                         }
                     } catch (err) {
@@ -281,7 +349,6 @@
                     formData.append('disc_mode', this.discMode);
                     formData.append('hum_mode', this.humMode);
                     
-                    // Excluded = catalog minus included
                     const excluded = this.catalogHumanities.map(h=>h.id).filter(id => !this.includedHumanities.includes(id));
                     formData.append('excluded_hum', JSON.stringify(excluded));
 
